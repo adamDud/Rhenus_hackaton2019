@@ -1,0 +1,200 @@
+imap.open host ‴imap.gmail.com‴ login ♥credential⟦gmail:address⟧ password ♥credential⟦gmail:password⟧ ignorecertificateerrors true 
+
+imap.getmails onlyunreadmessages true result ♥mails sincedate ⊂System.DateTime.Now.AddDays(-1)⊃ markasread false
+imap.close 
+
+♥dzialaj = false
+foreach ♥mail in ♥mails
+    if ⊂♥mail⟦subject⟧.Contains("Let's surf!")⊃
+        ♥dzialaj = true
+    end if
+end foreach
+
+if ⊂♥dzialaj==false⊃
+    jump shutdown
+else
+        ♥citylist = Weligama (Sri Lanka)❚Prefektura Chiba❚Puck❚Nuquí❚Biarritz❚Taghazout❚Uluwatu❚Jeffreys Bay❚Praia do Amado❚Nazaré
+
+
+
+        selenium.open type chrome url ‴google.pl‴
+        delay seconds 4
+
+        text.write text ‴Lokalizacja,Temperatura(°C),Wiatr(km/h),Wilgotnosc(%),Opady(%)‴ filename ‴♥environment⟦USERPROFILE⟧\Desktop\prognoza.csv‴ writemode override
+        ----------------------------------------------------------------
+        -INTERNET
+        ----------------------------------------------------------------
+        foreach ♥lokalizacja in ♥citylist
+
+            selenium.newtab url ‴https://www.google.com/search?q= ♥lokalizacja+weather+for+tomorrow‴
+            
+            selenium.gettext search ‴//*[@id="wob_wc"]‴ by xpath result ♥tekst errorjump naprawa
+           if ⊂♥tekst!=‴‴⊃
+                
+                text.find text ♥tekst regex ‴Szansa opadów: (?<opadyVal>\d{1,})\%‴
+                text.find text ♥tekst regex ‴Wilgotność: (?<wilgotnoscVal>\d{1,})\%‴
+                text.find text ♥tekst regex ‴(?<wiatrVal>\d{1,}) \S{4}\W‴
+                text.find text ♥tekst regex ‴(?<temperaturaVal>\d{1,})\W*°C‴
+                text.write text ‴⊂"\r\n"⊃♥lokalizacja,♥temperaturaVal,♥wiatrVal,♥wilgotnoscVal,♥opadyVal‴ filename ‴♥environment⟦USERPROFILE⟧\Desktop\prognoza.csv‴ writemode append
+            else
+                label naprawa
+                selenium.newtab url ‴https://www.timeanddate.com/weather/@10342337‴
+                
+                selenium.gettext search ‴//*[@id="wt-48"]‴ by xpath result ♥tekst 
+                
+                
+                text.find text ♥tekst regex ‴Precipitation \d{1,}% \d{1,}% \d{1,}% \d{1,}% (?<PopadyVal>\d{1,})%‴
+                text.find text ♥tekst regex ‴Humidity \d{1,}% \d{1,}% \d{1,}% \d{1,}% (?<PwilgotnoscVal>\d{1,})%‴
+                text.find text ♥tekst regex ‴Wind Speed \d{1,} m\/s \d{1,} m\/s \d{1,} m\/s \d{1,} m\/s (?<PwiatrVal>\d{1,})‴
+                text.find text ♥tekst regex ‴Temperature \d{1,} °C \d{1,} °C \d{1,} °C \d{1,} °C (?<PtemperaturaVal>\d{1,}) °C ‴
+                
+                ♥convert = ⟦float⟧3,6
+                ♥zmienionytyp = ⊂Int32.Parse(♥PwiatrVal⟦1⟧)*♥convert⊃
+                ♥jakas = ⊂♥zmienionytyp.ToString().Replace(",",".")⊃
+                text.write text ‴⊂"\r\n"⊃♥lokalizacja,♥PtemperaturaVal,♥jakas,♥PwilgotnoscVal,♥PopadyVal‴ filename ‴♥environment⟦USERPROFILE⟧\Desktop\prognoza.csv‴ writemode append
+                
+            end if
+        end foreach
+
+        selenium.close 
+        
+        --------------------------------------------------------------
+        -EXCEL
+        ---------------------------------------------------------------
+        excel.open path ‴♥environment⟦USERPROFILE⟧\Desktop\prognoza.csv‴
+
+        ♥len = ♥citylist⟦count⟧
+        ♥dobrywiatr = ⊂ new System.Collections.Generic.List<object>()⊃
+        ♥dobratemp = ⊂ new System.Collections.Generic.List<object>()⊃
+        ♥dobreopady = ⊂ new System.Collections.Generic.List<object>()⊃
+
+        for ♥x from 2 to 5
+
+            excel.getvalue colindex ‴♥x‴ row ‴1‴ result ♥colname
+            
+            
+            if ⊂♥colname==‴Temperatura(°C)‴⊃ 
+                
+                for ♥y from 2 to ♥len
+                    excel.getvalue colindex ‴♥x‴ row ‴♥y‴ result ♥p
+                    ♥temp = ⊂Double.Parse(♥p)⊃
+                    if ⊂♥temp>25⊃ 
+                        ♥dobratemp⟦⟧ = ♥y
+                    end if
+                end for
+            
+            
+            
+            else if ⊂♥colname==‴Wiatr(km/h)‴⊃
+                
+                for ♥y from 2 to ♥len
+                    excel.getvalue colindex ‴♥x‴ row ‴♥y‴ result ♥p
+                    ♥wiatr = ⊂Double.Parse(♥p)⊃
+                    if ⊂♥wiatr>21⊃ 
+                        ♥dobrywiatr⟦⟧ = ♥y
+                    end if
+                end for
+            
+            
+            
+            else if ⊂♥colname==‴Opady(%)‴⊃
+                
+                for ♥y from 2 to ♥len
+                    excel.getvalue colindex ‴♥x‴ row ‴♥y‴ result ♥p
+                    ♥opady = ⊂Double.Parse(♥p)⊃
+                    if ⊂♥opady<30⊃ 
+                        ♥dobreopady⟦⟧ = ♥y
+                    end if
+                end for
+            end if
+
+        end for 
+
+        -----------------------------------------------------------------
+        -WYNIKI
+        -----------------------------------------------------------------
+
+        
+        ♥zwyciezcy = ⊂ new System.Collections.Generic.List<object>()⊃
+
+        foreach ♥val in ♥dobratemp
+            if ♥dobreopady.Contains(♥val)
+                ♥zwyciezcy⟦⟧ = ♥val
+            end if
+        end foreach
+        
+
+        if ⊂♥zwyciezcy⟦count⟧>1⊃
+
+            ♥porownanie = ⊂ new System.Collections.Generic.List<object>()⊃
+            foreach ♥zwyciezca in ♥zwyciezcy
+                excel.getvalue row ♥zwyciezca colindex ‴3‴ result ♥predkosc
+                ♥g = ⊂Int32.Parse(♥predkosc)⊃
+                ♥porownanie⟦⟧ = ⟦integer⟧♥g
+            end foreach 
+            
+            
+            ♥currMax=0
+            
+            foreach ♥v in ♥porownanie
+                
+                if ⊂♥currMax<♥v⊃
+                    ♥currMax=♥v 
+                end if
+            end foreach
+            excel.save path ‴♥environment⟦USERPROFILE⟧\Desktop\prognoza2.xlsx‴
+            excel.close 
+            delay seconds 1
+            xlsx.open path ‴♥environment⟦USERPROFILE⟧\Desktop\prognoza2.xlsx‴
+            xlsx.find value ♥currMax resultrow ♥nazwa
+            xlsx.close 
+            
+            excel.open path ‴♥environment⟦USERPROFILE⟧\Desktop\prognoza2.xlsx‴
+            ♥winner = ⊂ new System.Collections.Generic.List<object>()⊃
+            for ♥b from 1 to 5
+                excel.getvalue row ♥nazwa colindex ‴♥b‴ result ♥wynik
+                ♥winner⟦⟧ = ♥wynik
+            end for
+            
+        else if ⊂♥zwyciezcy⟦count⟧==0⊃
+            ♥odbiorca = ♥mail
+            text.find text ♥odbiorca⟦from⟧ regex ‴\<(?<adres>\S{1,})\>‴
+            ♥adresstring = ♥adres⟦1⟧
+            list.create text ‴♥environment⟦USERPROFILE⟧\Desktop\prognoza2.xlsx‴ result ♥attachment
+            smtp.open host ‴smtp.gmail.com‴ port 465 options ‴SSL‴ login ‴dudkiewiczadam653@gmail.com‴ password ♥credential⟦gmail:password⟧ ignorecertificateerrors true
+            smtp.newmessage from ‴dudkiewiczadam653@gmail.com‴ to ♥adresstring subject ‴Złe wieści :(‴ textbody ‴Niestety, jutro nie ma warunków na surfowanie.‴ attachments ♥attachment result ♥odpowiedz
+            smtp.send ♥odpowiedz
+            smtp.close 
+            jump shutdown
+        else
+
+            ♥winner = ⊂ new System.Collections.Generic.List<object>()⊃
+            for ♥b from 1 to 5
+                excel.getvalue row ♥zwyciezcy⟦1⟧ colindex ‴♥b‴ result ♥wynik
+                ♥winner⟦⟧ = ♥wynik
+            end for
+                
+        end if 
+
+        excel.close
+         
+        text.write text ‴Najkorzystniejsze miejsce do surfowania jutro to  ♥winner⟦1⟧.⊂"\r\n"⊃Temperatura: ♥winner⟦2⟧ °C.⊂"\r\n"⊃Prędkość wiatru: ♥winner⟦3⟧ km/h.⊂"\r\n"⊃Wilgotność powietrza: ♥winner⟦4⟧ %.⊂"\r\n"⊃Szansa na opady: ♥winner⟦5⟧ %‴ filename ‴♥environment⟦USERPROFILE⟧\Desktop\surf.txt‴   
+---------------------------------------------------------------------
+-MAIL
+---------------------------------------------------------------------
+        text.read filename ‴♥environment⟦USERPROFILE⟧\Desktop\surf.txt‴ result ♥tresc
+
+        ♥odbiorca = ♥mail
+        text.find text ♥odbiorca⟦from⟧ regex ‴\<(?<adres>\S{1,})\>‴
+        ♥adresstring = ♥adres⟦1⟧
+        list.create text ‴♥environment⟦USERPROFILE⟧\Desktop\prognoza2.xlsx‴ result ♥attachment
+                
+        smtp.open host ‴smtp.gmail.com‴ port 465 options ‴SSL‴ login ‴dudkiewiczadam653@gmail.com‴ password ♥credential⟦gmail:password⟧ ignorecertificateerrors true
+        smtp.newmessage from ‴dudkiewiczadam653@gmail.com‴ to ♥adresstring subject ‴Let's surf!‴ textbody ♥tresc attachments ♥attachment result ♥odpowiedz
+        smtp.send ♥odpowiedz
+        smtp.close 
+
+
+
+label shutdown 
+end if
